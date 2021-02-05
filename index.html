@@ -1,0 +1,417 @@
+<!DOCTYPE html> 
+<html>
+  <head>
+    <title>Georoute Finder</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC6MiNTnqCJAm4cWvGuODfOwPE8IMO2dwE&callback=initMap&libraries=places&v=weekly" defer></script>
+    
+    <style type="text/css">
+      #right-panel 
+      {
+        font-family: "Roboto", "sans-serif";
+        line-height: 30px;
+        padding-left: 50px;
+      }
+
+      #right-panel select,
+      #right-panel input 
+      {
+        font-size: 15px;
+        padding: 4px;
+      }
+
+      #right-panel select 
+      {
+        width: 100%;
+      }
+
+      #right-panel i 
+      {
+        font-size: 12px;
+      }
+
+      html,
+      body 
+      {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #map 
+      {
+        height: 100%;
+        float: left;
+        width: 70%;
+        height: 100%;
+      }
+
+      #right-panel 
+      {
+        margin: 20px;
+        border-width: 2px;
+        width: 20%;
+        height: 400px;
+        float: left;
+        text-align: left;
+        padding-top: 0;
+      }
+
+      #directions-panel {
+        margin-top: 10px;
+        background-color:rgb(243, 193, 193);
+        padding: 10px;
+        overflow: scroll;
+        height: 210px;
+      }
+
+      
+      #directions-panel:hover {
+        background-color: rgb(192, 243, 192);                
+      }
+
+      h3:hover{
+        color: rgb(12, 238, 125);
+        box-shadow: 0 25px 35px rgba(233, 53, 53, 0.61);
+      }
+
+      b:hover{
+        color: rgb(12, 238, 125);
+        box-shadow: 0 25px 35px whitesmoke;
+      }
+
+      #end_address{
+          font: bold;
+      }
+
+      #end_address:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(91, 226, 131, 0.623);
+        background-color: rgb(244, 248, 244);
+        padding: 5px;
+        font-weight: bold;
+        }
+
+      #waypoint_address{
+          font: bold;
+      }
+
+      #waypoint_address:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(91, 226, 131, 0.623);
+        background-color: rgb(244, 248, 244);
+        padding: 5px;
+        font-weight: bold;
+      }
+
+      #start_address{
+          font: bold;
+      }
+
+      #start_address:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(91, 226, 131, 0.623);
+        background-color: rgb(244, 248, 244);
+        padding: 5px;
+        font-weight: bold;
+      }
+
+      #submit{
+          padding : 10px;
+          width: 80px;
+          background-color: rgb(206, 12, 12);
+          color : rgb(247, 239, 239);
+      }
+
+      #submit:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(91, 226, 131, 0.623);
+        background-color: rgb(137, 235, 137);
+        padding: 5px;
+        font-weight: bold;
+      }
+
+      #end_submit{
+        padding : 10px;
+        width: 80px;
+        background-color: rgb(8, 8, 8);
+        color : rgb(247, 239, 239);
+      }  
+      #end_submit:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(91, 226, 131, 0.623);
+        background-color: rgb(137, 235, 137);
+        padding: 5px;
+        font-weight: bold;
+      }
+    
+      #waypoint_submit{
+        padding : 10px;
+        width: 80px;
+        background-color: rgb(8, 8, 8);
+        color : rgb(247, 239, 239);
+      }  
+      #waypoint_submit:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(91, 226, 131, 0.623);
+        background-color: rgb(137, 235, 137);
+        padding: 5px;
+        font-weight: bold;
+      }
+
+      #start_submit{
+        padding : 10px;
+        width: 80px;
+        background-color: rgb(8, 8, 8);
+        color : rgb(247, 239, 239);
+      }  
+      #start_submit:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(91, 226, 131, 0.623);
+        background-color: rgb(137, 235, 137);
+        padding: 5px;
+        font-weight: bold;
+        }
+
+      #refresh{
+        padding : 10px;
+        width: 80px;
+        background-color: rgb(13, 171, 199);
+        color : rgb(247, 239, 239);
+      }  
+      #refresh:hover {
+        color: rgb(11, 153, 47);
+        box-shadow: 0 15px 25px rgba(6, 115, 165, 0.849);
+        background-color: rgb(137, 235, 137);
+        padding: 5px;
+        font-weight: bold;
+      }  
+
+      body{
+        background-image: url('pic4.jpg');
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+      }
+    </style>
+
+    <script>
+
+      var str_pnt;
+      var end_pnt;
+      var way_pnt;
+      var startword;
+      var wayptword;
+      var endword;
+      function initMap() 
+      {
+
+        // Autocomplete places API
+        const autocomplete1=new google.maps.places.Autocomplete(
+            (document.getElementById("start_address")),
+            {
+                types : ['geocode'],
+            });
+        google.maps.event.addListener(autocomplete1, 'place_changed', function () 
+        {
+          var near_place1 = autocomplete1.getPlace();
+          startword=near_place1.name;
+        });
+
+        const autocomplete2=new google.maps.places.Autocomplete(
+            (document.getElementById("waypoint_address")),
+            {
+                types : ['geocode'],
+            });
+        google.maps.event.addListener(autocomplete2, 'place_changed', function () 
+        {
+          var near_place2 = autocomplete2.getPlace();
+          wayptword=near_place2.name;
+        });
+
+        const autocomplete3=new google.maps.places.Autocomplete(
+            (document.getElementById("end_address")),
+            {
+                types : ['geocode'],
+            });
+        google.maps.event.addListener(autocomplete3, 'place_changed', function () 
+        {
+          var near_place3 = autocomplete3.getPlace();
+          endword=near_place3.name;
+        });
+
+
+        // Directions API
+        const directionsService = new google.maps.DirectionsService();
+        const directionsRenderer = new google.maps.DirectionsRenderer();
+
+        // Google Maps JavaScript API (Renders a map)
+        var map = new google.maps.Map(document.getElementById("map"), 
+        {
+          zoom: 8,
+          center: { lat: 11.410000, lng: 76.699997 },
+        });
+
+        // Geocoding API (Locates a place in the rendered map)
+        const geocoder1 = new google.maps.Geocoder();
+        document.getElementById("start_submit").addEventListener("click", () => 
+        {
+            geocodeAddress1(geocoder1, map);
+        });
+        const geocoder2 = new google.maps.Geocoder();
+        document.getElementById("waypoint_submit").addEventListener("click", () => 
+        {
+            geocodeAddress2(geocoder2, map);
+        });
+        const geocoder3 = new google.maps.Geocoder();
+        document.getElementById("end_submit").addEventListener("click", () => 
+        {
+            geocodeAddress3(geocoder3, map);
+        });
+
+        directionsRenderer.setMap(map);
+        document.getElementById("submit").addEventListener("click", () => 
+        {
+            calculateAndDisplayRoute(directionsService, directionsRenderer);
+        });
+
+      }
+
+      // Geocoding function
+      function geocodeAddress1(geocoder1, resultsMap) 
+      {
+        const address = startword;
+        geocoder1.geocode({ address: address }, (results, status) => 
+        {
+          if (status === "OK") 
+          {
+            str_pnt=results[0].geometry.location;
+            resultsMap.setCenter(results[0].geometry.location);
+            new google.maps.Marker(
+            {
+              map: resultsMap,
+              position: results[0].geometry.location,
+            });
+          } 
+          else 
+          {
+            alert("Geocode was not successful for the following reason: " + status);
+          }
+        });
+      }
+
+      function geocodeAddress2(geocoder2, resultsMap) 
+      {
+        const address = wayptword;
+        geocoder2.geocode({ address: address }, (results, status) => 
+        {
+          if (status === "OK") 
+          {
+            way_pnt=results[0].geometry.location;
+            resultsMap.setCenter(results[0].geometry.location);
+            new google.maps.Marker(
+            {
+              map: resultsMap,
+              position: results[0].geometry.location,
+            });
+          } 
+          else 
+          {
+            alert("Geocode was not successful for the following reason: " + status);
+          }
+        });
+      }
+
+      function geocodeAddress3(geocoder3, resultsMap) 
+      {
+        const address = endword;
+        geocoder3.geocode({ address: address }, (results, status) => 
+        {
+          if (status === "OK") 
+          {
+            end_pnt=results[0].geometry.location
+            resultsMap.setCenter(results[0].geometry.location);
+            new google.maps.Marker(
+            {
+              map: resultsMap,
+              position: results[0].geometry.location,
+            });
+          } 
+          else 
+          {
+            alert("Geocode was not successful for the following reason: " + status);
+          }
+        });
+      }
+
+      function calculateAndDisplayRoute(directionsService, directionsRenderer) 
+      {  
+        const waypts = [];
+        waypts.push(
+          {
+            location: way_pnt,
+            stopover: true,
+          });
+
+        // Function to find the route    
+        directionsService.route(
+          {
+            origin: str_pnt,
+            destination: end_pnt,
+            waypoints: waypts,
+            optimizeWaypoints: true,  // to get optimised route
+            travelMode: google.maps.TravelMode.DRIVING,  // mentioning the mode of travel so that the specific route can be taken 
+          },
+          (response, status) => 
+          {
+            if (status === "OK") 
+            {
+              directionsRenderer.setDirections(response);
+              const route = response.routes[0];
+              const summaryPanel = document.getElementById("directions-panel");
+              summaryPanel.innerHTML = "";
+
+              // For each route, display summary information.
+              for (let i = 0; i < route.legs.length; i++) 
+              {
+                const routeSegment = i + 1;
+                summaryPanel.innerHTML +=
+                  "<b>Route Segment: " + routeSegment + "</b><br>";
+                summaryPanel.innerHTML += "<b>From : </b>" + route.legs[i].start_address + "<br /><b>To : </b>";
+                summaryPanel.innerHTML += route.legs[i].end_address + "<br>";
+                summaryPanel.innerHTML += "<b>Distance : </b>" + route.legs[i].distance.text + "<br>";
+                summaryPanel.innerHTML += "<b>Duration : </b>" + route.legs[i].duration.text + "<br><br>";  
+              }
+            } 
+            else 
+            {
+              window.alert("Directions request failed due to " + status);
+            }
+          }
+        );
+      }
+
+    </script>
+
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="right-panel">
+        <h3 style="margin-left: 30px;fill:none;color : white;font-size : 30px;white-space: nowrap;">GEOROUTE FINDER</h3><br />
+        <b style="color: white;font-size : 20px;">Start </b> <br />
+            <input id="start_address" type="textbox" />
+            <span><input id="start_submit" type="button" value="Locate" /></span>   <br /><br />
+        <b style="color: white;font-size : 20px;">Waypoint </b> <br />
+            <input multiple id="waypoint_address" type="textbox" />
+            <span><input id="waypoint_submit" type="submit" value="Locate" /></span>
+        <br /><br />
+        <b style="color: white;font-size : 20px;">Destination </b> <br />
+            <input id="end_address" type="textbox" />
+            <span><input id="end_submit" type="submit" value="Locate" /></span>
+        <br /><br />
+        <input type="submit" id="submit" value="Let's go" href="https://superdevresources.com/css-button-glow-effect//" /><input type="button" id="refresh" style="margin-left: 113px;" onClick="history.go(0)" value="Refresh"><br /><br />
+      <div id="directions-panel"></div>
+    </div>
+  </body>
+</html>
